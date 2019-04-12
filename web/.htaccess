@@ -1,0 +1,10 @@
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+RewriteRule ^(.*).php$  index.php?route=$1 [QSA,PT,L]
+RewriteRule ^(.*).html$ index.php?route=$1 [QSA,PT,L]
+
+#RewriteCond %{REQUEST_FILENAME} !-f
+#RewriteCond %{REQUEST_FILENAME} !-d
+#RewriteRule (.*)\.html index.php?my=$1
