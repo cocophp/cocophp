@@ -12,8 +12,7 @@ namespace cocophp\core;
  */
 class match{
     private $index = '';
-    private $matchs = array();
-    private $rules = array();
+    public $rules = array();
     private $valid = array(
         'int'    => '/^\d+$/',  // 纯数字
         'number' => '/^[\d\.]+$/',  // 数字，可以带小数点
@@ -52,11 +51,12 @@ class match{
         $this->rules [ $match[0] ] = array();
         $this->rules [ $match[0] ]['required'] = false;     // 必须验证的字段
         $this->rules [ $match[0] ]['pretreat'] = false;     // 预处理函数
+        $this->rules [ $match[0] ]['callback'] = false;     // 预处理函数
         $this->rules [ $match[0] ]['refuse']   = false;     // 拒绝接受
         $this->rules [ $match[0] ]['match']    = $match[1]; // key映射规则
         $this->rules [ $match[0] ]['info']     = '';        // 错误提示信息
         $this->rules [ $match[0] ]['rule']     = [];        // 验证规则
-        $this->rules [ $match[0] ]['sever']    = 'default'; // 数组分流
+        $this->rules [ $match[0] ]['sever']    = [ 'default' ]; // 数组分流
         return $this;
     }
     /**
@@ -70,39 +70,24 @@ class match{
      * @author Jan
      * @data 2018-12-24
      */
-    public function rule( $rules, $params = array() ) {
-        if( is_object( $rules ) ) {
-            $this->rules[ $this->index ]['rule'][] = array( $rules, $params );
+    public function rule() {
+        $rules = func_get_args();
+        if( empty( $rules ) ){
+            return $this;
         }
-        if( is_string( $rules ) ) {
-            $rules = array( $rules );
-        }
-        if( is_array( $rules ) ) {
-            foreach ( $rules as $rule ) {
-                $temp = strtolower( $rule );
-                // 替换成相应的正则
-                if( isset( $this->valid[ $temp ] ) ) {
-                    $temp = $this->valid[ $temp ];
+        foreach ( $rules as $r ) {
+            if( is_object( $r ) ) {
+                $this->rules[ $this->index ]['rule'][] = $r;
+            }
+            if( is_array( $r ) ) {
+                $this->rule( ...$r );
+            }
+            if( is_string( $r ) ) {
+                $r = strtolower( $r );
+                if( isset( $this->valid[ $r ] ) ){
+                    $r = $this->valid[ $r ];
                 }
-                // 这里还要处理一下，对于length<20的情况。代码有点low。
-                // 这里不能替换成相关的正则。因为，中文往往占用更多的字符串长度
-                // 没办法，暂时移植到下面的验证中用 iconv_strlen 处理
-
-                // if( strpos( $temp,'length' ) == 0 ) {
-                //     if( strpos( $temp, '<' ) ) {
-                //         $temp = explode( '<', $temp );
-                //         $temp = '/^\w{0,'. ($temp[1]-1) .'}$/';
-                //     }
-                //     if( strpos( $temp, '>' ) ) {
-                //         $temp = explode( '>', $temp );
-                //         $temp = '/^\w{'. ($temp[1]+1) .',}$/';
-                //     }
-                //     if( strpos( $temp, '=' ) ) {
-                //         $temp = explode( '=', $temp );
-                //         $temp = '/^\w{'. $temp[1] .','. $temp[1] .'}$/';
-                //     }
-                // }
-                $this->rules[ $this->index ]['rule'][] = $temp;
+                $this->rules[ $this->index ]['rule'][] = $r;
             }
         }
         return $this;
@@ -114,8 +99,8 @@ class match{
      * @author Jan
      * @data 2018-12-24
      */
-    public function required() {
-        $this->rules[ $this->index ]['required'] = true;
+    public function required( $required = true ) {
+        $this->rules[ $this->index ]['required'] = $required;
         return $this;
     }
     /**
@@ -125,8 +110,8 @@ class match{
      * @author Jan
      * @data 2018-12-24
      */
-    public function refuse() {
-        $this->rules[ $this->index ]['refuse'] = true;
+    public function refuse( $refuse = true ) {
+        $this->rules[ $this->index ]['refuse'] = $refuse;
         return $this;
     }
     /**
@@ -153,15 +138,28 @@ class match{
         return $this;
     }
     /**
-     * @pretreat 预处理 该函数接收一个匿名函数，预处理所需验证字段。
+     * @callback 预处理 该函数接收一个匿名函数，预处理所需验证字段。
+     *                 请注意，匿名函数最终必须要将处理结果转换成字符串返回。
+     * @param  $callback function 预处理的匿名函数。
+     * @return obj
+     * @author Jan
+     * @data 2018-12-25
+     */
+    public function callback( $callback ) {
+        $this->rules[ $this->index ]['callback'] = $callback;
+        return $this;
+    }
+    /**
+     * @sever 分流 该函数接收一个匿名函数，预处理所需验证字段。
      *                 请注意，匿名函数最终必须要将处理结果转换成字符串返回。
      * @param  $pretreat function 预处理的匿名函数。
      * @return obj
      * @author Jan
      * @data 2018-12-26
      */
-    public function sever( $sever ) {
-        $this->rules[ $this->index ]['sever'] = $sever;
+    public function sever() {
+        $sever = func_get_args();
+        $this->rules[ $this->index ]['sever'] = array_merge( $sever );
         return $this;
     }
     /**
@@ -175,6 +173,11 @@ class match{
         $this->rules[ $this->index ]['default'] = $date;
         return $this;
     }
+    private function res( &$params, &$sever, $part, $value ){
+        foreach ($sever as $key => $v ) {
+            $params[ $v ][ $part ]= $value;
+        }
+    }
     /**
      * @obtained 该函数将从数据中得到一个完整的验证器。
      * @param  $arr array 验证器
@@ -182,38 +185,34 @@ class match{
      * @author Jan
      * @data 2018-12-25
      */
-    public function obtained( &$arr ) {
-
-        foreach ($arr as $columns => $rule ) {
-            $this->match( $columns );
-            if( isset( $rule['match'] ) ) {
-                $this->rules [ $columns ]['match'] = $rule['match'];
-            }
-            if( isset( $rule['info'] ) ) {
-                $this->info( $rule['info'] );
-            }
-            if( isset( $rule['rule'] ) ) {
-                if( isset( $rule['rule'][1]) and is_object($rule['rule'][0]) ) {
-                    $this->rule( $rule['rule'][0], $rule['rule'][1] );
-                } else {
-                    $this->rule( $rule['rule'] );
-                }
-            }
-            if( isset( $rule['required'] ) ) {
-                $this->required();
-            }
-            if( isset( $rule['default'] ) ) {
-                $this->default( $rule['default'] );
-            }
-            if( isset( $rule['pretreat'] ) ) {
-                $this->pretreat( $rule['pretreat'] );
-            }
-            if( isset( $rule['sever'] ) ) {
-                $this->sever( $rule['sever'] );
-            }
-        }
-        return $this;
-    }
+    // public function obtained( &$arr ) {
+    //
+    //     foreach ($arr as $columns => $rule ) {
+    //         $this->match( $columns );
+    //         if( isset( $rule['match'] ) ) {
+    //             $this->rules [ $columns ]['match'] = $rule['match'];
+    //         }
+    //         if( isset( $rule['info'] ) ) {
+    //             $this->info( $rule['info'] );
+    //         }
+    //         if( isset( $rule['rule'] ) ) {
+    //             $this->rule( $rule['rule'] );
+    //         }
+    //         if( isset( $rule['required'] ) ) {
+    //             $this->required( $rule['required'] );
+    //         }
+    //         if( isset( $rule['default'] ) ) {
+    //             $this->default( $rule['default'] );
+    //         }
+    //         if( isset( $rule['pretreat'] ) ) {
+    //             $this->pretreat( $rule['pretreat'] );
+    //         }
+    //         if( isset( $rule['sever'] ) ) {
+    //             $this->sever( $rule['rule'] );
+    //         }
+    //     }
+    //     return $this;
+    // }
     /**
      * @proving 自动验证器。
      * @param  $params array 要验证的数据
@@ -227,11 +226,11 @@ class match{
         // 此处只处理正则和匿名函数。
         $temp   = $params;
         $params = array();
-        foreach ($this->rules as $key => $rule) {
-            // 如果字段设置 refuse ，则只接受default，若不存在，则回跳过
-            if( $rule['refuse'] ) {
-                if( isset( $rule['default'] ) ) {
-                    $params[ $rule['sever'] ][ $rule['match'] ] = $rule['default'];
+        foreach ($this->rules as $key => $part) {
+            // 如果字段设置 refuse ，则只接受default，若不存在，则会跳过
+            if( $part['refuse'] ) {
+                if( isset( $part['default'] ) ) {
+                    $this->res( $params, $part['sever'], $part['match'], $part['default']  );
                 }
                 continue;
             }
@@ -239,13 +238,13 @@ class match{
             if( !isset( $temp[$key] ) ) {
                 // 首先查看是否需要默认值
                 // 对于提供默认值的字段，将不在验证。
-                if( isset( $rule['default'] ) ) {
-                    $params[ $rule['sever'] ][ $rule['match'] ] = $rule['default'];
+                if( isset( $part['default'] ) ) {
+                    $this->res( $params, $part['sever'], $part['match'], $part['default']  );
                     continue;
                 }
                 // 当然，如果字段是必须验证字段但没有默认值，则会直接抛失败信息。
-                if( $rule['required'] ) {
-                    $params = array( $key, $rule['info'] );
+                if( $part['required'] ) {
+                    $params = array( $key, $part['info'] );
                     return false;
                 }
                 // 对于数据中不存在的验证规则，这里不在验证。
@@ -254,20 +253,14 @@ class match{
             }
             // 字段存在。那么肯定是要验证的。
             // 首先查看是否需要预处理
-            if( $rule['pretreat'] !== false ) {
-                $temp[$key] = $rule['pretreat']( $temp[$key] );
+            if( $part['pretreat'] !== false ) {
+                $temp[$key] = $part['pretreat']( $temp[$key] );
             }
             // 根据规则，验证相关字段。
-            foreach ($rule['rule'] as $valid) {
-                if( is_object( $valid[0] ) ) {
-                    // 执行函数。
-                    if( isset( $valid[1] ) ) {
-                        $flag = $valid[0]($valid[1]);
-                    } else {
-                        $flag = $valid[0]();
-                    }
-                    if( !$flag ){
-                        $params = array( $key, $rule['info'] );
+            foreach ($part['rule'] as $valid) {
+                if( is_object( $valid ) ) {
+                    if( !$valid( $temp[ $key ] ) ){
+                        $params = array( $key, $part['info'] );
                         return false;
                     }
                     continue;
@@ -280,7 +273,7 @@ class match{
                 if( strpos( $valid, 'length<' ) === 0 ) {
                     $t = explode( 'length<', $valid );
                     if( iconv_strlen( $temp[$key],'utf8' ) >= $t[1] ) {
-                        $params = array( $key, $rule['info'] );
+                        $params = array( $key, $part['info'] );
                         return false;
                     }
                     continue;
@@ -289,7 +282,7 @@ class match{
                 if( strpos( $valid, 'length>' ) === 0 ) {
                     $t = explode( 'length>', $valid );
                     if( iconv_strlen( $temp[$key],'utf8' ) <= $t[1] ) {
-                        $params = array( $key, $rule['info'] );
+                        $params = array( $key, $part['info'] );
                         return false;
                     }
                     continue;
@@ -298,20 +291,22 @@ class match{
                 if( strpos( $valid, 'length=' ) === 0 ) {
                     $t = explode( 'length=', $valid );
                     if( iconv_strlen( $temp[$key],'utf8' ) != $t[1] ) {
-                        $params = array( $key, $rule['info'] );
+                        $params = array( $key, $part['info'] );
                         return false;
                     }
                     continue;
                 }
                 // 最后，只剩下正则处理
                 if( !preg_match( $valid,$temp[$key] ) ) {
-                    $params = array( $key, $rule['info'] );
+                    $params = array( $key, $part['info'] );
                     return false;
                 }
             }
-
+            if( $part['callback'] !== false ) {
+                $temp[$key] = $part['callback']( $temp[$key] );
+            }
             // 数据反向回执
-            $params[ $rule['sever'] ][ $rule['match'] ] = $temp[ $key ];
+            $this->res( $params, $part['sever'], $part['match'], $temp[ $key ] );
         }
         return true;
     }
