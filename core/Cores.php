@@ -11,8 +11,8 @@ class Cores{
             $request = Config::get( 'system.request' );
             $contro  = "{$request['modules']}\\{$request['contros']}";
             $action  = Config::get( 'system.request.action' );
-	    $contro  = new $contro();
-	    // php5的情况下，拿不到方法也抛不出异常。只能手动判断
+    	    $contro  = new $contro();
+    	    // php5的情况下，拿不到方法也抛不出异常。只能手动判断
             if( !method_exists( $contro, $action ) ){
                 exit( "function $action not found" );
             }
