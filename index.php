@@ -14,12 +14,13 @@ spl_autoload_register( function( $class ){
 use core\Config;
 use core\Route;
 use core\Cores;
+$env = 'uat';
 
 Config::init(
-    require __DIR__ . '/config/applications.php',
-    require __DIR__ . '/config/system.php',
-    require __DIR__ . '/config/rsa.php',
-    require __DIR__ . '/config/database.php'
+    require __DIR__ . "/config/$env/applications.php",
+    require __DIR__ . "/config/$env/system.php",
+    require __DIR__ . "/config/$env/rsa.php",
+    require __DIR__ . "/config/$env/database.php"
 );
 Route::analysis( $_SERVER['REQUEST_URI'] );
 echo Cores::execute();
