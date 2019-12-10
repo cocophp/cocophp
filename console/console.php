@@ -14,12 +14,13 @@ use core\Config;
 use core\Route;
 use core\Cores;
 use core\Console;
+$env = 'uat';
 
 Config::init(
-    require __DIR__ . '/../config/system.php',
-    require __DIR__ . '/../config/applications.php',
-    require __DIR__ . '/../config/rsa.php',
-    require __DIR__ . '/../config/database.php'
+    require __DIR__ . "/../config/$env/system.php",
+    require __DIR__ . "/../config/$env/applications.php",
+    require __DIR__ . "/../config/$env/rsa.php",
+    require __DIR__ . "/../config/$env/database.php"
 );
 Config::set( 'system.request.modules', 'console' );
 if( !isset($_SERVER['argv'][1]) ){
