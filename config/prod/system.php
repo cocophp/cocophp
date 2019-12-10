@@ -5,8 +5,8 @@ return [
         'service' => '',
         'request' => [
             'modules' => 'index',
-            'contros' => 'controllers/index',
-            'action'  => 'index',
+            'contros' => 'controllers\indexController',
+            'action'  => 'indexAction',
         ],
         'defualt' => [
             'applicationPath' => '\applications',
