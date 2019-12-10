@@ -5,7 +5,7 @@ return [
         'service' => '',
         'request' => [
             'modules' => 'index',
-            'contros' => 'controllers/index',
+            'contros' => 'controllers\index',
             'action'  => 'index',
         ],
         'defualt' => [
