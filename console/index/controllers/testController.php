@@ -1,5 +1,5 @@
 <?php
-namespace console\controllers;
+namespace console\index\controllers;
 
 use core\Db;
 use core\Cache;
