@@ -24,12 +24,10 @@ class Route{
         if( !empty( $url[ count($url)-1 ] ) ){
             Config::set( 'system.request.action',  $url[ count($url)-1 ] . 'Action' );
             unset( $url[ count($url)-1 ] );
-            $url = array_values( $url );
         }
         if( !empty( $url[ count($url)-1 ] ) ){
             Config::set( 'system.request.contros', 'controllers\\' . $url[ count($url)-1 ] . 'Controller' );
             unset( $url[ count($url)-1 ] );
-            $url = array_values( $url );
         }
         if( empty( $url ) ){
             $url[] = Config::get( 'system.request.modules' );
