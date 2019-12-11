@@ -22,7 +22,8 @@ Config::init(
     require __DIR__ . "/../config/$env/rsa.php",
     require __DIR__ . "/../config/$env/database.php"
 );
-Config::set( 'system.request.modules', 'console' );
+Config::set( 'system.request.modules', 'index' );
+Config::set( 'system.defualt.applicationPath', 'console' );
 if( !isset($_SERVER['argv'][1]) ){
     Console::show();
 }
