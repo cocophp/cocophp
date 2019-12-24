@@ -53,7 +53,7 @@ class singletonConnect{
         }
         if( !self::$__conn->query("SET NAMES {$DbConf[ 'charset' ]}") ){
              self::$__conn = NULL;
-            self::ping( $n++ );
+            self::ping( $n+1 );
         }
     }
     static public function connectDb() {

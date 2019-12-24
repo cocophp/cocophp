@@ -24,13 +24,25 @@ class Cores{
                 return json_encode( $res );
             }
         }catch (\Exception $e) {
-            var_dump( $e->getMessage() );
+            self::viewError( $e, 'Exception' );
         }
         catch( \Throwable $e ){
-            var_dump( $e->getMessage() );
+            self::viewError( $e, 'Throwable' );
         }
         catch( \Error $e ){
-            var_dump( $e->getMessage() );
+            self::viewError( $e, 'Error' );
         }
+    }
+    static private function viewError( $e, $type ){
+        if( Config::get( "system.env") == "prod" ){
+            echo "System internal error";
+            exit;
+        }
+        echo "<h2>{$type} : {$e->getMessage()}</h2>\n";
+        foreach ($e->getTrace() as $key => $value) {
+            echo "<p> In file {$value['file']} line {$value['line']} : ";
+            echo "{$value['class']} {$value['type']} {$value['function']}()</p>\n";
+        }
+        echo "<style>.a:{text-indent:20px;}</style>";
     }
 }
