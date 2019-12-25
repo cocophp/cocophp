@@ -13,6 +13,8 @@ use core\Cores;
 use core\Console;
 $env = 'uat';
 
+
+
 Config::init(
     require __DIR__ . "/../config/$env/system.php",
     require __DIR__ . "/../config/$env/applications.php",
