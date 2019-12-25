@@ -11,7 +11,7 @@ use core\Config;
 use core\Route;
 use core\Cores;
 use core\Console;
-$env = 'test';
+$env = 'uat';
 
 Config::init(
     require __DIR__ . "/../config/$env/system.php",
