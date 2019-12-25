@@ -1,5 +1,5 @@
 <?php
-namespace applications\template\controllers;
+namespace applications\index\controllers;
 
 use applications\AuthBase;
 use core\Db;
