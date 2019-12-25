@@ -3,19 +3,19 @@
 return [
     'system' =>[
         'Db' => [
-            'host' => '192.168.8.9',
+            'host' => '127.0.0.1',
             'port' => '3306',
             'user' => '',
             'pswd' => '',
             'database' => '',
             'charset' => 'utf8',
         ],
-        'Cache'=>[
-            'host'   => '192.168.8.3',
+        'Redis'=>[
+            'host' => '127.0.0.1',
             'port' => '6379',
-            'auth' => 'X01wRN6eZigiNX5_',
+            'auth' => '',
             'type' => 'redis',
-            'db'   => '1',
+            'db'   => '0',
         ],
     ]
 ];

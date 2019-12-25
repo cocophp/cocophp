@@ -9,10 +9,10 @@ class match{
     private $currentIndex = '';
     private $allMatchs = array();
     static public $verifys = [
-        'int'    => '/^[-]{0,1}\d*$/',                                     // 纯数字
-        'float'  => '/^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$/',  // 数字，可以带小数点
-        'char'   => '/^[a-zA-Z0-9]*$/',                            // 只能是字符(字母，数字)
-        'ukChar' => '/^[a-zA-Z]*$/',                               // 只能是字母
+        'int'    => '/^[-]{0,1}\d*$/',                                // 纯数字
+        'float'  => '/^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$/',     // 数字，可以带小数点
+        'char'   => '/^[a-zA-Z0-9]*$/',                               // 只能是字符(字母，数字)
+        'ukChar' => '/^[a-zA-Z]*$/',                                  // 只能是字母
         'cnChar' => '/^[\x{4e00}-\x{9fa5}]*$/uisU',                   // 只能是中文
         'word'   => '/^[a-zA-Z0-9\x{4e00}-\x{9fa5}]*$/uisU',          // 字母，数字，中文
         // email 支持 nickName@ip 但是这里并不能校验ip是否正确。可参阅 https://www.regular-expressions.info/email.html

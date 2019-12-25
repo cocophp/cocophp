@@ -5,6 +5,10 @@ namespace core;
  */
 class Config{
     static public $conf = array();
+    /**
+     * 设置配置文件值，若不存在则会自动创建
+     * @var [type]
+     */
     static public function set( $key, $value ){
         $key = str_replace( ' ', '', $key );
         $key  = explode( '.', $key );
@@ -27,11 +31,15 @@ class Config{
             $temp = $value;
         }
     }
-    static public function get( $key = '*' ){
+    /**
+     * 获取配置文件值，若改值不存在则返回default
+     * @var [type]
+     */
+    static public function get( $key = '*', $default = false ){
         $key = str_replace( ' ', '', $key );
         $key = explode( '.', $key );
         $res = self::$conf;
-        foreach ($key as $key => $value) {
+        foreach ( $key as $value ) {
             if( isset( $res[ $value ] ) ){
                 if( is_array( $res[ $value ] ) ){
                     $res = $res[ $value ];
@@ -42,16 +50,16 @@ class Config{
                 if( $value == '*' ){
                     return $res;
                 }
-                return false;
+                return $default;
             }
         }
         return $res;
     }
-    static public function init( $confs ){
-        $confs = func_get_args();
-        foreach ( $confs as $key => $cnf ) {
-            self::$conf = array_merge_recursive( $cnf, self::$conf );
+    static public function init( ...$args ){
+        foreach ( $args as $cnf ) {
+            if( $cnf !== false ){
+                self::$conf = array_merge_recursive( $cnf, self::$conf );
+            }
         }
-        // var_dump( self::$conf );
     }
 }

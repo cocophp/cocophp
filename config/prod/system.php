@@ -12,5 +12,6 @@ return [
             'applicationPath' => '\applications',
         ],
         'logPath' => '/home/mosh/logs/EDM/',
+        'domain'  => 'http://localhost/',
     ],
 ];

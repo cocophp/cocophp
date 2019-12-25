@@ -10,8 +10,8 @@ class Route{
         // 此处写的真心不好.
         $url = explode( '?', $url )[0];
         $service = '';
-        if( Config::get( "system.service") ){
-            $service .= Config::get( "system.service"); // , 'controller';
+        if( Config::get( "system.service" ) ){
+            $service .= Config::get( "system.service" );
         }
         $url = str_replace( $service, '', $url );
         $url = explode( '/', $url );

@@ -3,9 +3,7 @@ namespace core;
 
 use core\config;
 use core\singletonConnect;
-/**
- *
- */
+
 class Db{
     protected $__DbTable = '';
     protected $__DbArgv  = [];
@@ -44,7 +42,6 @@ class Db{
     public function commit(){
         return self::$singletonConnect->__query( 'commit' );
     }
-
     public function table( $table ){
         $this->__DbTable = "";
         $prefix = config::get( 'DataBase.prefix' );
@@ -54,101 +51,65 @@ class Db{
         $this->__DbTable .= $table;
         return $this;
     }
-    /**
-     *
-     */
     public function command( $sql ){
         $this->__DbSql = $sql;
         return $this;
     }
-    /**
-     *
-     */
-    public function argv(){
-        $argv = func_get_args();
-        array_walk_recursive( $argv, function($a){
+    public function argv( ...$args ){
+        array_walk_recursive( $args, function($a){
             $this->__DbArgv[] = $this->__filterString( $a );
         } );
         return $this;
     }
-    /**
-     *
-     */
     public function whereIn( $args ){
         $res = [];
         foreach ($args as $value) {
             if( !empty( $value ) ){
-                $res[] = '?';
-                $this->argv( $value );
+                $res[] = $this->__filterString( $value );
             }
         }
-        return 'IN(' . implode( ',', $res ) . ')';
-    }
-    /**
-     *
-     */
-    public function whereUnknown( $args ){
-        $res = [];
-        foreach ($args as $key => $value) {
-            if( !empty( $value ) ){
-                $res[] = "$key=?";
-                $this->argv( $value );
-            }
+        if( empty( $res ) ){
+            return '';
         }
-        return implode( ' AND ', $res );
+        $this->__DbSql =  str_replace(
+            "in()",
+            "IN(" . implode( ',', $res ) . ")",
+            $this->__DbSql
+        );
+        return $this;
     }
-    /**
-     *
-     */
     public function page( $page_no, $page_size ){
         $page_size = (int)$page_size;
         $page_no   = (int)$page_no > 0 ? ($page_no-1)*$page_size : 0;
         // 计算分页
         return $this->limit( $page_no, $page_size );
     }
-    /**
-     *
-     */
     public function limit( $page_no, $page_size=false ){
         $page_no   = (int)$page_no;
+        $tmp = "";
         if( $page_size === false ){
-            return " LIMIT {$page_no}";
+            $tmp = " LIMIT {$page_no}";
+        } else {
+            $page_size = (int)$page_size;
+            $tmp = " LIMIT {$page_no},{$page_size}";
         }
-        $page_size = (int)$page_size;
-        return " LIMIT {$page_no},{$page_size}";
+        $this->__DbSql =  str_replace( "limit()", $tmp, $this->__DbSql );
+        return $this;
     }
-    /**
-     *
-     */
-    public function insert(){
-        return call_user_func_array( [$this, 'insertMore'], func_get_args() );
-        return $this->insertMore( func_get_args() );
+    public function insert( ...$args ){
+        return $this->insertMore( ...$args );
     }
-    /**
-     *
-     */
     protected function __filterString( $str ){
         return "\"" . addslashes( $str ) . "\"";
     }
-    /**
-     *
-     */
-    public function insertMore(){
+    public function insertMore( ...$argv ){
         $data  = array();
         $datas = array();
         $field = array();
         $hasOcc= true;
         $index = 0;
-        $argv = func_get_args();
         if( empty($argv) ){
             return $this;
-        }
-        // 我擦，这个用起来真的好痛苦。万恶的php5.5
-        foreach ($argv as $key => $value) {
-            foreach ($value as $v) {
-                unset( $argv[$key] );
-                $argv[] = $v;
-            }
         }
         foreach ( $argv as $key => $value ) {
             if( empty($value) ){
@@ -179,13 +140,9 @@ class Db{
         $this->__DbArgv = [];
         return $this;
     }
-    /**
-     *
-     */
-    public function insertOne(){
+    public function insertOne( ...$argv ){
         $datas = array();
         $field = array();
-        $argv = func_get_args();
         $this->__DbSql = "INSERT INTO `{$this->__DbTable}`";
         foreach ( $argv as $value ) {
             foreach ( $value as $f => $d ) {
@@ -198,10 +155,7 @@ class Db{
         $this->__DbArgv = [];
         return $this;
     }
-    /**
-     *
-     */
-    public function update( $field, $where = [] ){
+    public function update( $field, $where = '' ){
         $this->__DbSql = "UPDATE `{$this->__DbTable}` SET ";
         $this->__DbArgv = [];
         $temp = [];
@@ -212,6 +166,10 @@ class Db{
         if( empty( $where ) ){
             return $this;
         }
+        if( is_string( $where ) ){
+            $this->__DbSql .= " WHERE " . $where;
+            return $this;
+        }
         $temp = [];
         $this->__DbSql .= " WHERE ";
         foreach ( $where as $f => $d ) {
@@ -220,24 +178,10 @@ class Db{
         $this->__DbSql .= implode( ' AND ', $temp );
         return $this;
     }
-    /**
-     *
-     */
-    public function updateMore( $filed ){
-        $argv = func_get_args();
-        if( isset( $argv[0] ) ){
-            unset( $argv[0] );
-        }
+    public function updateMore( $filed, ...$argv ){
         $upField = array();
         $inField = array();
         $hasOcc  = true;
-        // 我擦，这个用起来真的好痛苦。万恶的php5.5
-        foreach ($argv as $key => $value) {
-            foreach ($value as $v) {
-                unset( $argv[$key] );
-                $argv[] = $v;
-            }
-        }
         if( empty( $argv ) ){
             return $this;
         }
@@ -268,35 +212,26 @@ class Db{
             .  " END WHERE `$filed` IN(" . implode( ',', $inField ) . ")";
         return $this;
     }
-    /**
-     *
-     */
-    public function delete(){
-        $where = func_get_args();
+    public function delete( $where = '' ){
         if( empty( $where ) ){
             throw new \Exception("Delete must give a where", 1);
         }
-        // delete from onewechat_user_info where id = 0;
-        $this->__DbSql = "DELETE FROM `{$this->__DbTable}` WHERE";
-        $temp = array();
-        foreach ( $where as $w ) {
-            foreach ($w as $f => $d ) {
-                $temp[] = "`$f`=" . $this->__filterString( $d );
-            }
+        $this->__DbSql = "DELETE FROM `{$this->__DbTable}` WHERE ";
+
+        if( is_string( $where ) ){
+            $this->__DbSql .= $where;
+            return $this;
+        }
+        $temp = [];
+        foreach ( $where as $f => $d ) {
+            $temp[] = "`$f`=" . $this->__filterString( $d );
         }
         $this->__DbSql .= implode( ' AND ', $temp );
-        $this->__DbArgv = [];
         return $this;
     }
-    /**
-     *
-     */
     public function toExec(){
         return $this->toBool();
     }
-    /**
-     *
-     */
     public function toBool(){
         $sql = $this->toSql();
         if( empty( $sql ) ){
@@ -315,7 +250,7 @@ class Db{
      * 在单主写入的情况下是这样,若双主互备份,或者设置过自增id步长度,那id就不再是连续的,
      * 后面情况可以采用分布式id方式在脚本类直接生成全部来解决.
      */
-    public function toArray(){
+    public function toArray( $mode = 'all' ){
         $sqlMode = explode( ' ', $this->__DbSql );
         foreach ($sqlMode as $value) {
             if( !empty( $value ) ){
@@ -337,8 +272,10 @@ class Db{
 
         $r = array();
         if( $sqlMode == 'select' ){
-            // Mysqli类内部实现了迭代器接口,不需要$res->fetch_assoc()
             foreach ( $res as $value) {
+                if( $mode == 'one' ){
+                    return $value;
+                }
                 $r[] = $value;
             }
             return $r;
@@ -348,26 +285,13 @@ class Db{
             'firstID' => self::$singletonConnect->__getConn()->insert_id,
         ];
     }
-    /**
-     *
-     */
-    public function toJson(){
-        return json_encode( $this->toArray() );
+    public function toJson( $mode = 'all' ){
+        return json_encode( $this->toArray( $mode ) );
     }
-    /**
-     *
-     */
     public function toSql(){
-        // 若 $this->__DbArgv 不为空，则解析并嵌入到sql语句中。
-        // var_dump( $this->__DbSql,$this->__DbArgv );
         if( !empty( $this->__DbArgv ) ){
             $this->__DbSql = str_replace( '?', '%s', $this->__DbSql );
-            // 这个处理起来真的好麻烦啊 php5.6以上,可能直接用下面函数就搞定了.
-            // $this->__DbSql = sprintf( $this->__DbSql, ...$this->__DbArgv );
-            // 没办法,暂时先这样吧
-            $this->__DbArgv = array_reverse( $this->__DbArgv );
-            $this->__DbArgv[] = $this->__DbSql;
-            $this->__DbSql = call_user_func_array( 'sprintf', array_reverse( $this->__DbArgv ) );
+            $this->__DbSql = sprintf( $this->__DbSql, ...$this->__DbArgv );
             $this->__DbArgv = [];
         }
         return $this->__DbSql;
