@@ -11,9 +11,7 @@ use core\Config;
 use core\Route;
 use core\Cores;
 use core\Console;
-$env = 'uat';
-
-
+$env = 'test';
 
 Config::init(
     require __DIR__ . "/../config/$env/system.php",
@@ -22,5 +20,6 @@ Config::init(
     require __DIR__ . "/../config/$env/database.php"
 );
 
+Config::set( "system.env", $env );
 Route::analysis( $_SERVER['REQUEST_URI'] );
 echo Cores::execute();

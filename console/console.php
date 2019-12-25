@@ -20,6 +20,7 @@ Config::init(
     require __DIR__ . "/../config/$env/database.php"
 );
 
+Config::set( 'system.env', $env );
 Config::set( 'system.defualt.applicationPath', 'console' );
 if( !isset($_SERVER['argv'][1]) ){
     exit( "必须指定一个路由： php console.php index/index/index k1=v1 k2=v2\n" );
