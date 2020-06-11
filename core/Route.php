@@ -32,6 +32,10 @@ class Route{
         if( empty( $url ) ){
             $url[] = Config::get( 'system.request.modules' );
         }
-        Config::set( 'system.request.modules', Config::get('system.defualt.applicationPath') . '\\' . implode( '\\', $url ) );
+        if( Config::get( 'system.mode' ) == 'console' ){
+            Config::set( 'system.request.modules', '\console\\' . implode( '\\', $url ) );
+        } else {
+            Config::set( 'system.request.modules', '\applications\\' . implode( '\\', $url ) );
+        }
     }
 }

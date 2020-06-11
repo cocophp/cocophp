@@ -14,7 +14,7 @@ class Cache{
     static public function Redis(){
         if( self::$__redis == NULL ){
             self::$__redis = new \Redis();
-            $config =  config::get( 'system.Cache' );
+            $config =  config::get( 'system.Redis' );
             self::$__redis->connect( $config['host'], $config['port'] );
             if( $config['auth'] and !self::$__redis->auth( $config['auth'] ) ){
                 throw new \Exception("redis auth failed", 1);

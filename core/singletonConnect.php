@@ -49,7 +49,7 @@ class singletonConnect{
                 $DbConf[ 'pswd' ],
                 $DbConf[ 'database' ]
             );
-            self::$__debug  = Config::get( 'system.request.modules') != 'console';
+            self::$__debug  = Config::get( 'system.mode') != 'console';
         }
         if( !self::$__conn->query("SET NAMES {$DbConf[ 'charset' ]}") ){
              self::$__conn = NULL;

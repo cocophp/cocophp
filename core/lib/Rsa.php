@@ -11,7 +11,7 @@ class Rsa{
      * @param  str   encrypt string;
      * @return boole the encryption results
      */
-    static public function encrypt( &$str ){
+    public function encrypt( &$res ){
         $key = openssl_pkey_get_public( Config::get( 'rsa.publicKey' ) );
         if (!$key) {
             $str = "This public key is not available";
@@ -30,7 +30,7 @@ class Rsa{
      * @param  str   decrypt string;
      * @return boole the decryption results
      */
-    static public function decrypt( &$res ){
+    public function decrypt( &$res ){
         $key = openssl_pkey_get_private( Config::get( 'rsa.privateKey' ) );
         if (!$key) {
             $res = "This private key is not available";

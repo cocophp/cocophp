@@ -77,6 +77,12 @@ class match{
         }
         return $this;
     }
+    public function alias( $as ){
+        if( $as ){
+            $this->allMatchs [ $this->currentIndex ]['match'] = $as;
+        }
+        return $this;
+    }
     public function defaultValue( $default ){
         $this->allMatchs [ $this->currentIndex ][ 'default' ] = $default;
         return $this;
@@ -205,7 +211,7 @@ class match{
     }
     public function proving( &$res ){
         $params = $res;
-        $res    = array();
+        $res    = new \stdClass();
         foreach ( $this->allMatchs as $part => $rule ) {
             if( $rule['refuse'] ) {
                 if( isset( $rule['default'] ) ) {
@@ -213,9 +219,11 @@ class match{
                 }
                 continue;
             }
-            if( !isset( $params[ $part ] ) ) {
+            if( !isset( $params->$part ) ) {
                 if( $rule['required'] ) {
-                    $res = [ 'field'=>$part, 'msg'=>$rule[ 'info' ], 'code' =>$rule['code'] ];
+                    $res->field = $part;
+                    $res->msg   = $rule[ 'info' ];
+                    $res->code  = $rule[ 'code' ];
                     return false;
                 }
                 if( isset( $rule['default'] ) ) {
@@ -223,26 +231,31 @@ class match{
                 }
                 continue;
             }
-            $params[ $part ] = $this->runMatchAction( $rule[ 'matchBefore' ], $params[ $part ] );
-            if( !$this->runRuleAction( $rule[ 'rule' ], $params[ $part ] ) ){
-                $res = [ 'field'=>$part, 'msg'=>$rule[ 'info' ], 'code' =>$rule['code'] ];
+            $params->$part = $this->runMatchAction( $rule[ 'matchBefore' ], $params->$part );
+            if( !$this->runRuleAction( $rule[ 'rule' ], $params->$part ) ){
+                $res->field = $part;
+                $res->msg   = $rule[ 'info' ];
+                $res->code  = $rule[ 'code' ];
                 return false;
             }
-            $params[ $part ] = $this->runMatchAction( $rule[ 'matchAfter' ], $params[ $part ] );
-            if( $params[ $part ] === false ){
+            $params->$part = $this->runMatchAction( $rule[ 'matchAfter' ], $params->$part );
+            if( $params->$part === false ){
                 continue;
             }
-            $this->setSever( $res, $rule['sever'], $rule['match'], $params[ $part ] );
+            $this->setSever( $res, $rule['sever'], $rule['match'], $params->$part );
         }
         return true;
     }
     private function setSever( &$res, &$sever, &$key, &$value ){
         if( empty( $sever ) ){
-            $res[ $key ] = $value;
+            $res->$key = $value;
             return;
         }
         foreach ( $sever as $k => $v ) {
-            $res[ $v ][ $key ] = $value;
+            if( !isset( $res->$v ) or!is_object( $res->$v ) ){
+                $res->$v = new \stdClass();
+            }
+            $res->$v->$key = $value;
         }
     }
     private function runRuleAction( &$allAction, &$values ){
